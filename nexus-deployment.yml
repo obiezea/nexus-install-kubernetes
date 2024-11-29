@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nexus
+  namespace: nexus
+  labels:
+    app: nexus
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nexus
+  template:
+    metadata:
+      labels:
+        app: nexus
+    spec:
+      initContainers:
+      - name: init-myvolume
+        image: busybox
+        command: ['sh', '-c', 'mkdir -p /mnt/data/nexus; chmod 777 /mnt/data/nexus']
+        volumeMounts:
+        - name: nexus-data
+          mountPath: /mnt/data/nexus
+      containers:
+      - name: sonatype
+        image: sonatype/nexus3:latest
+        ports:
+        - containerPort: 8081
+        volumeMounts:
+        - name: nexus-data
+          mountPath: /mnt/data/nexus
+      volumes:
+      - name: nexus-data
+        persistentVolumeClaim:
+          claimName: nexus-pvc
